@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>ThreatScape — see your repo as a city under siege</title>
+    <meta
+      name="description"
+      content="Paste a GitHub URL. ThreatScape scans it with an in-browser Go/WASM security engine and renders the result as a living 3D cyber-city where threat actors hover over vulnerable code. No backend, nothing leaves your browser."
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='80' font-size='80'%3E%F0%9F%8F%99%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="viewport"></div>
+
+    <main id="landing">
+      <div class="landing-inner">
+        <div class="brand">
+          <span class="brand-glyph">▲</span> THREAT<span class="brand-accent">SCAPE</span>
+        </div>
+        <h1>Your repository is a city.<br />Let’s see who’s attacking it.</h1>
+        <p class="tagline">
+          Paste a GitHub URL. An in-browser <strong>Go → WebAssembly</strong> engine scans every file
+          for secrets, injection sinks, weak crypto and misconfigurations, cross-references your
+          dependencies against <strong>OSV.dev</strong>, then renders it all as a living 3D
+          cyber-city — threat actors hovering over the buildings they’d hit.
+        </p>
+
+        <form id="repo-form" autocomplete="off">
+          <div class="input-row">
+            <input
+              id="repo-input"
+              type="text"
+              placeholder="github.com/owner/repo  ·  or just owner/repo"
+              spellcheck="false"
+              aria-label="GitHub repository URL"
+            />
+            <button id="analyze-btn" type="submit">Analyze ▸</button>
+          </div>
+          <div id="input-error" role="alert" hidden></div>
+        </form>
+
+        <div class="examples">
+          <span>Try:</span>
+          <button class="example" data-repo="juice-shop/juice-shop">juice-shop ☠ deliberately vulnerable</button>
+          <button class="example" data-repo="expressjs/express">express</button>
+          <button class="example" data-repo="pallets/flask">flask</button>
+          <button class="example" data-repo="gin-gonic/gin">gin</button>
+        </div>
+
+        <details class="token-box">
+          <summary>Private repo, or hitting rate limits? Add a GitHub token</summary>
+          <div class="token-inner">
+            <input id="token-input" type="password" placeholder="github_pat_… (read-only is plenty)" spellcheck="false" />
+            <p>
+              Stored only in this browser’s localStorage and sent only to <code>api.github.com</code>.
+              There is no server here to see it — the whole app is static files + WASM.
+            </p>
+          </div>
+        </details>
+
+        <footer class="trust-note">
+          ◆ 100% client-side · repo contents never leave your machine · secrets are masked before display
+        </footer>
+      </div>
+    </main>
+
+    <div id="loading" hidden>
+      <div class="loading-inner">
+        <div class="loading-title">ANALYZING <span id="loading-repo"></span></div>
+        <div class="stage-track" id="stage-track">
+          <div class="stage" data-stage="meta"><i>◇</i>contact</div>
+          <div class="stage" data-stage="tree"><i>◇</i>map</div>
+          <div class="stage" data-stage="download"><i>◇</i>acquire</div>
+          <div class="stage" data-stage="scan"><i>◇</i>scan</div>
+          <div class="stage" data-stage="osv"><i>◇</i>cross-ref</div>
+          <div class="stage" data-stage="build"><i>◇</i>construct</div>
+        </div>
+        <div class="progress-shell"><div id="progress-bar"></div></div>
+        <div id="loading-log"></div>
+        <button id="loading-cancel" type="button">abort</button>
+      </div>
+    </div>
+
+    <div id="hud" hidden>
+      <header id="hud-top">
+        <button id="btn-home" title="New scan">◂ THREAT<span class="brand-accent">SCAPE</span></button>
+        <div id="hud-repo">
+          <a id="hud-repo-name" target="_blank" rel="noopener noreferrer"></a>
+          <div id="hud-repo-sub"></div>
+        </div>
+        <div id="hud-score" title="Security posture score">
+          <svg viewBox="0 0 120 120" width="92" height="92" aria-hidden="true">
+            <circle class="dial-track" cx="60" cy="60" r="50" />
+            <circle id="dial-value" cx="60" cy="60" r="50" />
+            <text id="dial-grade" x="60" y="58">–</text>
+            <text id="dial-number" x="60" y="80">…</text>
+          </svg>
+          <div id="threat-level"></div>
+        </div>
+        <div id="sev-chips" role="group" aria-label="Severity filters"></div>
+      </header>
+
+      <aside id="panel" hidden>
+        <button id="panel-close" aria-label="Close panel">✕</button>
+        <div id="panel-content"></div>
+      </aside>
+
+      <div id="legend">
+        <div class="legend-title">THREAT ACTORS</div>
+        <div id="legend-items"></div>
+      </div>
+
+      <div id="toolbar">
+        <button id="btn-tour" title="Fly between the worst findings">▶ THREAT TOUR</button>
+        <button id="btn-overview" title="Reset camera (O)">⌂</button>
+        <button id="btn-orbit" title="Auto-orbit">↻</button>
+        <button id="btn-shot" title="Save a PNG of the city">📷</button>
+        <div id="controls-hint">drag orbit · wheel zoom · right-drag pan · click anything</div>
+      </div>
+
+      <div id="tour-bar" hidden>
+        <button id="tour-prev">◂</button>
+        <div id="tour-status"></div>
+        <button id="tour-next">▸</button>
+        <button id="tour-exit">exit tour</button>
+      </div>
+
+      <div id="tooltip" hidden></div>
+      <div id="osv-warning" hidden>⚠ OSV.dev unreachable — dependency vulnerabilities not checked</div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
