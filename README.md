@@ -1,5 +1,8 @@
 # ThreatScape 🏙️⚠️
 
+<img width="1512" height="861" alt="image" src="https://github.com/user-attachments/assets/6119f876-9517-4b4f-9e54-8ed9aa93ae5b" />
+
+
 **Paste a GitHub URL → watch the repository rise as a 3D cyber-city, with threat actors hovering over the code they'd attack.**
 
 ThreatScape is a fully client-side security visualizer. An in-browser **Go → WebAssembly** engine
