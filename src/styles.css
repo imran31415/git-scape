@@ -16,6 +16,9 @@
 }
 
 * { box-sizing: border-box; }
+/* The `hidden` attribute must beat element `display` rules (e.g. #loading's
+   `display: grid`); without this, hide() calls have no visual effect. */
+[hidden] { display: none !important; }
 html, body {
   margin: 0;
   height: 100%;
